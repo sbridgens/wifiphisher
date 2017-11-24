@@ -75,6 +75,15 @@ OP_MODE5 = 0x5
 # 2 cards, 3 interfaces
 # i) AP, ii) Extensions, iii) Internet
 OP_MODE6 = 0x6
+# Advanced and WPS association 0x7
+#  3 cards, 3 interfaces
+#  i) AP, ii) Extensions, iii) Extensions (Managed)
+OP_MODE7 = 0x7
+
+# Advanced and WPS association w/ 1 vif support AP/Monitor 0x8
+# 2 cards, 3 interfaces
+# i) AP, ii) Extensions, iii) Extensions (Managed)
+OP_MODE8 = 0x8
 
 AP_RATES = "\x0c\x12\x18\x24\x30\x48\x60\x6c"
 

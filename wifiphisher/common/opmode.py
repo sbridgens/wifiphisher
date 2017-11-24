@@ -25,8 +25,8 @@ class OpMode(object):
     def __init__(self):
         """
         Construct the class
-        :param self: An OpModeManager object
-        :type self: OpModeManager
+        :param self: An OpMode object
+        :type self: OpMode
         :return: None
         :rtype: None
         """
@@ -40,9 +40,9 @@ class OpMode(object):
     def initialize(self, args):
         """
         Initialize the opmode manager
-        :param self: An OpModeManager object
+        :param self: An OpMode object
         :param args: An argparse.Namespace object
-        :type self: OpModeManager
+        :type self: OpMode
         :type args: argparse.Namespace
         :return: None
         :rtype: None
@@ -55,9 +55,9 @@ class OpMode(object):
     def _check_args(self, args):
         """
         Checks the given arguments for logic errors.
-        :param self: An OpModeManager object
+        :param self: An OpMode object
         :param args: An argparse.Namespace object
-        :type self: OpModeManager
+        :type self: OpMode
         :type args: argparse.Namespace
         :return: None
         :rtype: None
@@ -147,15 +147,24 @@ class OpMode(object):
                 constants.W +
                 '] Only one card was found. Wifiphisher will deauth only '
                 'on the target AP channel')
+        # args.wAI should be used with args.wE
+        if args.wpspbc_assoc_interface and not args.wpspbc_exploit:
+            sys.exit(
+                '[' +
+                constants.R +
+                '!' +
+                constants.W +
+                '] --wpspbc-assoc-interface (-wAI) requires --wpspbc-exploit (-wE) option.')
+
 
     def set_opmode(self, args, network_manager):
         """
         Sets the operation mode.
 
-        :param self: An OpModeManager object
+        :param self: An OpMode object
         :param args: An argparse.Namespace object
         :param network_manager: A NetworkManager object
-        :type self: OpModeManager
+        :type self: OpMode
         :type args: argparse.Namespace
         :type network_manager: NetworkManager
         :return: None
@@ -183,18 +192,34 @@ class OpMode(object):
         6) Advanced and Internet w/ 1 vif support AP/Monitor 0x6
           2 cards, 3 interfaces
           i) AP, ii) Extensions, iii) Internet
+        7) Advanced and WPS association 0x7
+          3 cards, 3 interfaces
+          i) AP, ii) Extensions (Monitor), iii) Extensions (Managed)
+        8) Advanced and WPS association w/ 1 vif support AP/Monitor 0x8
+          2 cards, 3 interfaces
+          i) AP, ii) Extensions (Monitor), iii) Extensions (Managed)
         """
 
         if not args.internetinterface and not args.nojamming:
             if not self._is_one_phy_interface:
-                self.op_mode = constants.OP_MODE1
-                logger.info("Starting OP_MODE1 (0x1)")
+                # check if there is WPS association interface
+                if args.wpspbc_assoc_interface:
+                    self.op_mode = constants.OP_MODE7
+                    logger.info("Starting OP_MODE7 (0x7)")
+                else:
+                    self.op_mode = constants.OP_MODE1
+                    logger.info("Starting OP_MODE1 (0x1)")
             else:
                 if self._perfect_card is not None:
                     network_manager.add_virtual_interface(
                         self._perfect_card)
-                self.op_mode = constants.OP_MODE5
-                logger.info("Starting OP_MODE5 (0x5)")
+                # check if there is WPS association interface
+                if args.wpspbc_assoc_interface:
+                    self.op_mode = constants.OP_MODE8
+                    logger.info("Starting OP_MODE8 (0x8)")
+                else:
+                    self.op_mode = constants.OP_MODE5
+                    logger.info("Starting OP_MODE5 (0x5)")
         if args.internetinterface and not args.nojamming:
             if not self._is_one_phy_interface:
                 self.op_mode = constants.OP_MODE2
@@ -215,8 +240,8 @@ class OpMode(object):
 
     def internet_sharing_enabled(self):
         """
-        :param self: An OpModeManager object
-        :type self: OpModeManager
+        :param self: An OpMode object
+        :type self: OpMode
         :return: True if we are operating in a mode that shares Internet
         access.
         :rtype: bool
@@ -226,8 +251,8 @@ class OpMode(object):
 
     def advanced_enabled(self):
         """
-        :param self: An OpModeManager object
-        :type self: OpModeManager
+        :param self: An OpMode object
+        :type self: OpMode
         :return: True if we are operating in an advanced
         mode (a mode that leverages two network cards)
         :rtype: bool
@@ -236,12 +261,14 @@ class OpMode(object):
         return self.op_mode in [constants.OP_MODE1,
                                 constants.OP_MODE2,
                                 constants.OP_MODE5,
-                                constants.OP_MODE6]
+                                constants.OP_MODE6,
+                                constants.OP_MODE7,
+                                constants.OP_MODE8]
 
     def deauth_enabled(self):
         """
-        :param self: An OpModeManager object
-        :type self: OpModeManager
+        :param self: An OpMode object
+        :type self: OpMode
         :return: True if we are operating in a mode
         that deauth is enabled.
         :rtype: bool
@@ -250,12 +277,14 @@ class OpMode(object):
         return self.op_mode in [constants.OP_MODE1,
                                 constants.OP_MODE2,
                                 constants.OP_MODE5,
-                                constants.OP_MODE6]
+                                constants.OP_MODE6,
+                                constants.OP_MODE7,
+                                constants.OP_MODE8]
 
     def freq_hopping_enabled(self):
         """
-        :param self: An OpModeManager object
-        :type self: OpModeManager
+        :param self: An OpMode object
+        :type self: OpMode
         :return: True if we are separating the wireless cards
         for jamming and lunching AP.
         :rtype: bool
@@ -264,7 +293,18 @@ class OpMode(object):
         """
 
         return self.op_mode in [constants.OP_MODE1,
-                                constants.OP_MODE2]
+                                constants.OP_MODE2,
+                                constants.OP_MODE7]
+
+    def assoc_enabled(self):
+        """
+        :param self: An OpMode object
+        :type self: OpMode
+        :return: True if we are using managed Extensions(that associate to WLANs)
+        :rtype: bool
+        """
+        return self.op_mode in [constants.OP_MODE7,
+                                constants.OP_MODE8]
 
 
 def validate_ap_interface(interface):
