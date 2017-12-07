@@ -145,3 +145,6 @@ AP_SEL_ATTRS = 'interface mac_matcher network_manager args'
 
 # Fourway handshake extension
 CONST_A = "Pairwise key expansion"
+
+# RogueAp related
+DENY_MACS_PATH = '/tmp/hostapd.deny'

@@ -505,6 +505,10 @@ class WifiphisherEngine:
         self.access_point.set_interface(ap_iface)
         self.access_point.set_channel(channel)
         self.access_point.set_essid(essid)
+        if args.wpspbc_assoc_interface:
+            wps_mac = self.network_manager.get_interface_mac(
+                args.wpspbc_assoc_interface)
+            self.access_point.add_deny_macs([wps_mac])
         if args.presharedkey:
             self.access_point.set_psk(args.presharedkey)
         if self.opmode.internet_sharing_enabled():
